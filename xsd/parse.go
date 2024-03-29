@@ -973,6 +973,8 @@ func parseMinMaxRestriction(el *xmltree.Element, base Type) (time.Time, float64)
 			format = "2006-01-02"
 		} else if v == DateTime {
 			format = time.RFC3339
+		} else if v == GYearMonth {
+			format = "2006-01"
 		}
 
 		if format != "" {
