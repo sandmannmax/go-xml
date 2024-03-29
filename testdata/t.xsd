@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://xml.datev.de/DD/DE/bedi/tps/invoice/v060">
+  <xsd:simpleType name="p7">
+    <!-- <xsd:restriction> -->
+      <!-- <xsd:simpleType> -->
+        <xsd:union>
+          <xsd:simpleType>
+            <xsd:restriction base="xsd:decimal">
+              <xsd:totalDigits value="12"/>
+              <xsd:fractionDigits value="2"/>
+              <xsd:minInclusive value="0.01"/>
+              <xsd:maxInclusive value="9999999999.99"/>
+              <xsd:pattern value="[\+\-]?([1-9]\d{0,9}|0)(\.\d{2})"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+          <xsd:simpleType>
+            <xsd:restriction base="xsd:decimal">
+              <xsd:totalDigits value="12"/>
+              <xsd:fractionDigits value="2"/>
+              <xsd:minInclusive value="-9999999999.99"/>
+              <xsd:maxInclusive value="-0.01"/>
+              <xsd:pattern value="[\+\-]?([1-9]\d{0,9}|0)(\.\d{2})"/>
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:union>
+      <!-- </xsd:simpleType> -->
+    <!-- </xsd:restriction> -->
+  </xsd:simpleType>
+</xsd:schema>
