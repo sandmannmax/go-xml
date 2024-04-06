@@ -5,7 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/sandmannmax/go-xml/internal/commandline"
@@ -62,13 +66,34 @@ func (cfg *Config) GenAST(files ...string) (*ast.File, error) {
 	return code.GenAST()
 }
 
-func (cfg *Config) readFiles(files ...string) ([][]byte,error) {
+var alreadyImportedFiles = []string{}
+
+func (cfg *Config) readFiles(files ...string) ([][]byte, error) {
 	data := make([][]byte, 0, len(files))
 	for _, filename := range files {
-		b, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return nil, err
+		var b []byte
+
+		// check if filename is url
+		fileUrl, err := url.Parse(filename)
+		isUrl := err == nil && (fileUrl.Scheme == "http" || fileUrl.Scheme == "https")
+
+		if isUrl {
+			resp, err := http.Get(filename)
+			if err != nil {
+				return nil, err
+			}
+			b, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			b, err = ioutil.ReadFile(filename)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		alreadyImportedFiles = append(alreadyImportedFiles, filename)
 		cfg.debugf("read %s", filename)
 		if cfg.followImports {
 			importedRefs, err := xsd.Imports(b)
@@ -77,7 +102,17 @@ func (cfg *Config) readFiles(files ...string) ([][]byte,error) {
 			}
 			importedFiles := make([]string, 0, len(importedRefs))
 			for _, r := range importedRefs {
-				importedFiles = append(importedFiles, r.Location)
+				loc := r.Location
+				if isUrl {
+					// combine urls
+					referencedFileUrl, err := url.Parse(loc)
+					if err == nil && !referencedFileUrl.IsAbs() {
+						loc = fileUrl.ResolveReference(referencedFileUrl).String()
+					}
+				}
+				if !slices.Contains[[]string, string](alreadyImportedFiles, loc) {
+					importedFiles = append(importedFiles, loc)
+				}
 			}
 			referencedData, err := cfg.readFiles(importedFiles...)
 			if err != nil {

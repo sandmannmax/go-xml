@@ -150,7 +150,16 @@ func Parse(docs ...[]byte) ([]Schema, error) {
 		if err := s.parse(root); err != nil {
 			return nil, err
 		}
-		parsed[tns] = s
+		if _, ok := parsed[tns]; ok {
+			combinedS := parsed[tns]
+			for k, v := range s.Types {
+				combinedS.Types[k] = v
+			}
+			combinedS.Doc += "\n" + s.Doc
+			parsed[tns] = combinedS
+		} else {
+			parsed[tns] = s
+		}
 	}
 
 	for _, s := range parsed {
