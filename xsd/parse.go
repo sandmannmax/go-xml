@@ -424,7 +424,7 @@ func deref(ref, real *xmltree.Element) *xmltree.Element {
 	// Some attributes can contain a qname, and must be converted to use the
 	// xmlns prefixes in ref's scope.
 	hasQName := map[xml.Name]bool{
-		xml.Name{"", "type"}: true,
+		{Space: "", Local: "type"}: true,
 	}
 	for i, attr := range el.StartElement.Attr {
 		if hasQName[attr.Name] {
@@ -614,6 +614,11 @@ func elementDefaultType(root *xmltree.Element) {
 		anyType   = xml.Name{Space: schemaNS, Local: "anyType"}
 	)
 	for _, el := range root.SearchFunc(and(isElement, hasNoType)) {
+		// is ref set, skip setting default type
+		if el.Attr("", "ref") != "" {
+			continue
+		}
+
 		el.SetAttr("", "type", el.Prefix(anyType))
 	}
 }
